@@ -27,7 +27,6 @@ def main():
     Pipeline(**args.__dict__).run(input_dir=args.input_dir)
     return 0
 
-
 def get_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-i', '--input-dir', default='.',
