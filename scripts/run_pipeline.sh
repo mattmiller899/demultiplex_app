@@ -37,7 +37,7 @@ function USAGE() {
 	echo
     exit 1
 }
-echo "TEST"
+echo "Test2"
 INPUT_DIR="."
 WORK_DIR="."
 CORE_COUNT=1
