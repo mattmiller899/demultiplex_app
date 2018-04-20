@@ -17,9 +17,9 @@ From: ubuntu:latest
     #
     mkdir -p /app
     cd /app
-    git clone git@github.com:hurwitzlab/stampede2-template.git
+    git clone git@github.com:mattmiller899/demultiplex_app.git 
 
-    # 
+	#
     # Mount points for TACC directories
     # 
     mkdir /home1
