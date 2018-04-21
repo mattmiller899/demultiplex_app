@@ -216,14 +216,14 @@ class Pipeline:
                 log.info('removing barcodes from "%s"', input_file)
                 run_cmd([
                     '/app/demultiplex_app/stampede/run.sh'
-"
+"""
                     '/miniconda/bin/python', '/miniconda/lib/python2.7/site-packages/qiime/extract_barcodes.py',
                     '-f', input_file,
                     '-c', 'barcode_single_end',
                     '-m', str(self.mapping_file),
                     '-l', str(self.barcode_length),
                     '-o', str(output_dir)
-" 
+"""
                    ],
                     log_file=os.path.join(output_dir, 'log')
                 )
