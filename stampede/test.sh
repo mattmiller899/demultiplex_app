@@ -9,4 +9,6 @@
 
 set -u
 
-./run.sh -i "$PWD/../singularity" -p 5
+echo "TESTING SUBPROCESS"
+
+#./run.sh -i "$PWD/../singularity" -p 5
