@@ -3,7 +3,7 @@ From: ubuntu:latest
 
 %environment
     PATH="/app/demultiplex_app/scripts":$PATH
-    PATH="/miniconda/lib/python2.7/site-packages/qiime":$PATH
+    PATH="/miniconda/bin":$PATH
 
 %runscript
     /miniconda/bin/python /app/demultiplex_app/scripts/pipeline.py $@

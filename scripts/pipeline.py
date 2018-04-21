@@ -195,7 +195,7 @@ class Pipeline:
                 log.info('removing barcodes from forward reads "%s"', input_file)
                 log.info('removing barcodes from reverse reads "%s"', paired_end_file)
                 run_cmd([
-                        '/miniconda/bin/python', '/miniconda/bin/extract_barcodes.py',
+                        'python', '/miniconda/bin/extract_barcodes.py',
                         '-f', input_file,
                         '-r', paired_end_file,
                         '-c', 'barcode_paired_end',
@@ -215,12 +215,12 @@ class Pipeline:
             else:
                 log.info('removing barcodes from "%s"', input_file)
                 run_cmd([
-                    '/miniconda/bin/python', '/miniconda/bin/extract_barcodes.py',
-                    #'-f', input_file,
-                    #'-c', 'barcode_single_end',
-                    #'-m', str(self.mapping_file),
-                    #'-l', str(self.barcode_length),
-                    #'-o', str(output_dir)
+                    'python', '/miniconda/bin/extract_barcodes.py',
+                    '-f', input_file,
+                    '-c', 'barcode_single_end',
+                    '-m', str(self.mapping_file),
+                    '-l', str(self.barcode_length),
+                    '-o', str(output_dir)
                    ],
                     log_file=os.path.join(output_dir, 'log')
                 )
@@ -247,7 +247,7 @@ class Pipeline:
                     log.info('Splitting libraries of "%s" and "%s" with "%s"', forward_fastq_fp, reverse_fastq_fp, barcodes_fp)
                     #TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
                     run_cmd([
-                            '/miniconda/bin/python /miniconda/bin/split_libraries_fastq.py',
+                            'python /miniconda/bin/split_libraries_fastq.py',
                             '-o', str(output_dir),
                             '-b', str(barcodes_fp) + ',' + str(barcodes_fp),
                             '-i', str(forward_fastq_fp) + ',' + str(reverse_fastq_fp),
@@ -279,7 +279,7 @@ class Pipeline:
                         log.info('Splitting libraries of "%s" with "%s"', input_file, barcodes_fp)
                         # TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
                         run_cmd([
-                            '/miniconda/bin/python /miniconda/bin/split_libraries_fastq.py',
+                            'python /miniconda/bin/split_libraries_fastq.py',
                             '-o', str(output_dir),
                             '-b', str(barcodes_fp),
                             '-i', str(input_file),
@@ -319,7 +319,7 @@ class Pipeline:
                 split_fastq_basename = os.path.basename(split_fastq_fp)
                 file_name = re.split('_seqs', split_fastq_basename)[0]
                 run_cmd([
-                        '/miniconda/bin/python /miniconda/bin/split_sequence_file_on_sample_ids.py',
+                        'python /miniconda/bin/split_sequence_file_on_sample_ids.py',
                         '-i', split_fastq_fp,
                         '-o', str(output_dir),
                         '--file_type', 'fastq'
