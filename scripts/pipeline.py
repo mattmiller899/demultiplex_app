@@ -215,7 +215,7 @@ class Pipeline:
             else:
                 log.info('removing barcodes from "%s"', input_file)
                 run_cmd([
-                    '/miniconda/bin/python', '/miniconda/bin/extract_barcodes.py'
+                    '/miniconda/bin/python', '/miniconda/bin/extract_barcodes.py',
                     #'-f', input_file,
                     #'-c', 'barcode_single_end',
                     #'-m', str(self.mapping_file),
