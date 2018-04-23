@@ -11,11 +11,11 @@ function ADVANCED_USAGE() {
 	echo "	-m MAPPING_FILE			path to file containing information about the barcodes. Must be in the QIIME mapping file format"
 	echo
 	echo "Optional arguments:"
-	echo "	-h						show this help message and exit"
+	echo "	-h				show this help message and exit"
 	echo "	-i INPUT_DIR			path to the input directory (default = current directory)"
-	echo "	-w WORK_DIR				path to the output directory (default = current directory)"
+	echo "	-w WORK_DIR			path to the output directory (default = current directory)"
 	echo "	-c CORE_COUNT			number of cores to use (int) (default = 1)"
-	echo "	-p						Indicates that the input files are paired end reads"
+	echo "	-p				Indicates that the input files are paired end reads"
 	echo
 	exit 1
 }
