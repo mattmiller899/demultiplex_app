@@ -24,27 +24,25 @@ def main():
     logging.basicConfig(level=logging.INFO)
     args = get_args()
 
-    Pipeline(**args.__dict__).run(input_dir=args.input_dir)
+    Pipeline(**args.__dict__).run(input_file=args.input_file)
     return 0
 
 def get_args():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-i', '--input-dir', default='.',
-                            help='path to the input directory')
-    arg_parser.add_argument('-w', '--work-dir', default='.',
+    arg_parser.add_argument('-i', '--input-file', required=True,
+                            help='path to the input file')
+    arg_parser.add_argument('-w', '--work-dir', required=True,
                             help='path to the output directory')
 
-    arg_parser.add_argument('-c', '--core-count', default=1, type=int,
-                            help='number of cores to use')
-
-    arg_parser.add_argument('--barcode-length', required=True, type=int,
+    arg_parser.add_argument('-b', '--barcode-length', required=True, type=int,
                             help='length of the barcodes')
 
-    arg_parser.add_argument('--mapping-file', required=True,
+    arg_parser.add_argument('-m', '--mapping-file', required=True,
                             help='path to file containing information about the barcodes. Must be in the QIIME mapping '
                                  'file format')
 
-    arg_parser.add_argument('--paired-ends', action='store_true', default=False)
+    arg_parser.add_argument('-p', '--paired-ends', default='', 
+                            help='path to paired end file')
 
     '''
     arg_parser.add_argument('--uchime-ref-db-fp', default='/16SrDNA/pr2/pr2_gb203_version_4.5.fasta',
@@ -74,20 +72,23 @@ def get_args():
 
 class Pipeline:
     def __init__(self,
+            input_file,
             work_dir,
-            core_count,
             mapping_file,
             barcode_length,
             paired_ends,
             **kwargs  # allows some command line arguments to be ignored
             ):
-
+        
+        self.input_file = input_file
         self.work_dir = work_dir
-        self.core_count = core_count
 
         self.mapping_file = mapping_file
         self.barcode_length = barcode_length
-        self.paired_ends = paired_ends
+        self.paired_end_file = paired_ends
+        self.paired_ends = False
+        if self.paired_end_file != '':
+            self.paired_ends = True
 
         '''
         self.pear_min_overlap = pear_min_overlap
@@ -104,9 +105,9 @@ class Pipeline:
         self.uchime_ref_db_fp = uchime_ref_db_fp
         '''
 
-    def run(self, input_dir):
+    def run(self, input_file):
         output_dir_list = list()
-        output_dir_list.append(self.step_01_remove_barcodes(input_dir=input_dir))
+        output_dir_list.append(self.step_01_remove_barcodes(input_file=input_file))
         output_dir_list.append(self.step_02_split_libraries(input_dir=output_dir_list[-1]))
         output_dir_list.append(self.step_03_demultiplex(input_dir=output_dir_list[-1]))
         if self.paired_ends is True:
@@ -126,10 +127,15 @@ class Pipeline:
     def initialize_step(self):
         function_name = sys._getframe(1).f_code.co_name
         log = logging.getLogger(name=function_name)
+        #Make step output_dir
         output_dir = create_output_dir(output_dir_name=function_name, parent_dir=self.work_dir)
-        return log, output_dir
+        #Make specific file output_dir
+        name, ext = os.path.splitext(self.input_file)
+        fileout_dir = create_output_dir(output_dir_name=os.path.basename(name), parent_dir=output_dir)
+        return log, fileout_dir
 
     def complete_step(self, log, output_dir):
+        return
         output_dir_list = sorted(os.listdir(output_dir))
         if len(output_dir_list) == 0:
             raise PipelineException('ERROR: no output files in directory "{}"'.format(output_dir))
@@ -193,55 +199,51 @@ class Pipeline:
                             )
 
 
-    def step_01_remove_barcodes(self, input_dir):
+    def step_01_remove_barcodes(self, input_file):
         log, output_dir = self.initialize_step()
         if len(os.listdir(output_dir)) > 0:
             log.info('output directory "%s" is not empty, this step will be skipped', output_dir)
         else:
             log.info('Going to remove barcodes')
             if self.paired_ends is True:
-                for forward_fastq_fp in get_forward_fastq_files(input_dir=input_dir):
-                    log.info('removing barcodes from forward reads "%s"', forward_fastq_fp)
-                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp)
-                    log.info('removing barcodes from reverse reads "%s"', reverse_fastq_fp)
-                    run_cmd([
-                            'extract_barcodes.py',
-                            '-f', forward_fastq_fp,
-                            '-r', reverse_fastq_fp,
-                            '-c', 'barcode_paired_end',
-                            '-m', str(self.mapping_file),
-                            '-l', str(self.barcode_length),
-                            '-L', str(self.barcode_length),
-                            '-o', str(output_dir)
-                        ],
-                        log_file=os.path.join(output_dir, 'log')
-                    )
-                    forward_fastq_basename = os.path.basename(forward_fastq_fp)
-                    tmp = re.split('_([0R])1', forward_fastq_basename)
-                    file_name = tmp[0] + re.split('.fastq', tmp[2])[0]
-                    os.rename(os.path.join(output_dir, 'reads1.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R1.fastq'))
-                    os.rename(os.path.join(output_dir, 'reads2.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R2.fastq'))
-                    os.rename(os.path.join(output_dir, 'barcodes.fastq'), os.path.join(output_dir, file_name + '_barcodes.fastq'))
-            else:
-                input_files_glob = os.path.join(input_dir, '*.fastq*')
-                for input_file in glob.glob(input_files_glob):
-                    log.info('removing barcodes from "%s"', input_file)
-                    run_cmd([
+                log.info('removing barcodes from forward reads "%s"', input_file)
+                log.info('removing barcodes from reverse reads "%s"', self.paired_end_file)
+                run_cmd([
                         'extract_barcodes.py',
                         '-f', input_file,
-                        '-c', 'barcode_single_end',
+                        '-r', self.paired_end_file,
+                        '-c', 'barcode_paired_end',
                         '-m', str(self.mapping_file),
                         '-l', str(self.barcode_length),
+                        '-L', str(self.barcode_length),
                         '-o', str(output_dir)
-                        ],
-                        log_file=os.path.join(output_dir, 'log')
-                    )
-                    file_basename = os.path.basename(input_file)
-                    file_name = re.split('.fastq', file_basename)[0]
-                    os.rename(os.path.join(output_dir, 'reads.fastq'),
-                              os.path.join(output_dir, file_name + '_debarcoded.fastq'))
-                    os.rename(os.path.join(output_dir, 'barcodes.fastq'),
-                              os.path.join(output_dir, file_name + '_barcodes.fastq'))
+                    ],
+                    log_file=os.path.join(output_dir, 'log')
+                )
+                forward_fastq_basename = os.path.basename(input_file)
+                tmp = re.split('_([0R])1', forward_fastq_basename)
+                file_name = tmp[0] + re.split('.fastq', tmp[2])[0]
+                os.rename(os.path.join(output_dir, 'reads1.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R1.fastq'))
+                os.rename(os.path.join(output_dir, 'reads2.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R2.fastq'))
+                os.rename(os.path.join(output_dir, 'barcodes.fastq'), os.path.join(output_dir, file_name + '_barcodes.fastq'))
+            else:
+                log.info('removing barcodes from "%s"', input_file)
+                run_cmd([
+                    'extract_barcodes.py',
+                    '-f', input_file,
+                    '-c', 'barcode_single_end',
+                    '-m', str(self.mapping_file),
+                    '-l', str(self.barcode_length),
+                    '-o', str(output_dir)
+                    ],
+                    log_file=os.path.join(output_dir, 'log')
+                )
+                file_basename = os.path.basename(input_file)
+                file_name = re.split('.fastq', file_basename)[0]
+                os.rename(os.path.join(output_dir, 'reads.fastq'),
+                          os.path.join(output_dir, file_name + '_debarcoded.fastq'))
+                os.rename(os.path.join(output_dir, 'barcodes.fastq'),
+                          os.path.join(output_dir, file_name + '_barcodes.fastq'))
         self.complete_step(log, output_dir)
         return output_dir
 
@@ -330,18 +332,17 @@ class Pipeline:
                 log.info('Splitting seq file "%s"', split_fastq_fp)
                 split_fastq_basename = os.path.basename(split_fastq_fp)
                 file_name = re.split('_seqs', split_fastq_basename)[0]
-                out_dir = create_output_dir(output_dir_name=file_name, parent_dir=output_dir)
                 run_cmd([
                         'split_sequence_file_on_sample_ids.py',
                         '-i', split_fastq_fp,
-                        '-o', str(out_dir),
+                        '-o', str(output_dir),
                         '--file_type', 'fastq'
                     ],
                     log_file=os.path.join(output_dir, 'log')
                 )
-                for sample_file in glob.glob(os.path.join(out_dir, '*.fastq')):
+                for sample_file in glob.glob(os.path.join(output_dir, '*.fastq')):
                     sample_file_basename = os.path.basename(sample_file)
-                    os.rename(sample_file, os.path.join(out_dir, file_name + '_' + sample_file_basename))
+                    os.rename(sample_file, os.path.join(output_dir, file_name + '_' + sample_file_basename))
 
         self.complete_step(log, output_dir)
         return output_dir
@@ -353,40 +354,33 @@ class Pipeline:
             log.info('output directory "%s" is not empty, this step will be skipped', output_dir)
         else:
             log.info('Splitting sample files back into paired end files')
-            subfolders = [f.path for f in scandir.scandir(input_dir) if f.is_dir()]
-            for folder in subfolders:
-                folder_basename = os.path.basename(folder)
-                if folder_basename == "fastqc_results":
-                    continue
-                out_dir = create_output_dir(output_dir_name=folder_basename, parent_dir=output_dir)
-                log.info('Splitting contents of "%s"', folder)
-                input_files_glob = os.path.join(folder, '*.fastq')
-                for input_file in glob.glob(input_files_glob):
-                    log.info('Making paired end files with "%s"', input_file)
-                    input_file_basename = os.path.basename(input_file)
-                    input_file_no_fastq = input_file_basename.split('.fastq')[0]
-                    out1 = open(os.path.join(out_dir, input_file_no_fastq + '_R1.fastq'), 'w')
-                    out2 = open(os.path.join(out_dir, input_file_no_fastq + '_R2.fastq'), 'w')
-                    with open(input_file, 'r') as f:
-                        count = 0
-                        write_file = 1
-                        for l in f:
-                            if count % 4 == 0:
-                                write_file = l.split(' ')[2].split(':')[0]
-                                write_line = l.split(' ')
-                                if write_file == '1':
-                                    out1.write('@' + ' '.join(write_line[1:]))
-                                elif write_file == '2':
-                                    out2.write('@' + ' '.join(write_line[1:]))
-                                else:
-                                    log.info('Bad number for paired end files "%s" in "%s', write_file, l)
-                            elif write_file == '1':
-                                out1.write(l)
+            input_files_glob = os.path.join(input_dir, '*.fastq')
+            for input_file in glob.glob(input_files_glob):
+                log.info('Making paired end files with "%s"', input_file)
+                input_file_basename = os.path.basename(input_file)
+                input_file_no_fastq = input_file_basename.split('.fastq')[0]
+                out1 = open(os.path.join(output_dir, input_file_no_fastq + '_R1.fastq'), 'w')
+                out2 = open(os.path.join(output_dir, input_file_no_fastq + '_R2.fastq'), 'w')
+                with open(input_file, 'r') as f:
+                    count = 0
+                    write_file = 1
+                    for l in f:
+                        if count % 4 == 0:
+                            write_file = l.split(' ')[2].split(':')[0]
+                            write_line = l.split(' ')
+                            if write_file == '1':
+                                out1.write('@' + ' '.join(write_line[1:]))
                             elif write_file == '2':
-                                out2.write(l)
-                            count += 1
-                    out1.close()
-                    out2.close()
+                                out2.write('@' + ' '.join(write_line[1:]))
+                            else:
+                                log.info('Bad number for paired end files "%s" in "%s', write_file, l)
+                        elif write_file == '1':
+                            out1.write(l)
+                        elif write_file == '2':
+                            out2.write(l)
+                        count += 1
+                out1.close()
+                out2.close()
 
         self.complete_step(log, output_dir)
         return output_dir

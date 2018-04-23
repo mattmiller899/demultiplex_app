@@ -1,22 +1,22 @@
 {
-    "name": "stampede2-template",
-    "version": "0.0.1",
-    "shortDescription": "A tutorial on how to create an Agave app.",
-    "longDescription": "You can say more stuff here.",
+    "name": "demultiplexer",
+    "version": "1.0",
+    "shortDescription": "This program takes in barcoded reads and removes the barcodes and demultiplexes each read into a bin based on the barcode's information found in the mapping file.",
+    "longDescription": "Usage: pipeline.py [-h] [-i INPUT_DIR] [-w WORK_DIR] [-c CORE_COUNT] -b BARCODE_LENGTH -m MAPPING_FILE [-p]\n\nRequired arguments:\n-b BARCODE_LENGTH: length of the barcodes (int)\n-m MAPPING_FILE: path to file containing information about the barcodes. Must be in the QIIME mapping file format\n\nOptional arguments:\n-h: show this help message and exit\n-i INPUT_DIR: path to the input directory (default = current directory)\n-w WORK_DIR: path to the output directory (default = current directory)\n-c CORE_COUNT: number of cores to use (int) (default = 1)\n-p: Indicates that the input files are paired end reads",
     "available": true,
     "checkpointable": false,
-    "defaultMemoryPerNode": 32,
-    "defaultProcessorsPerNode": 16,
+    "defaultMemoryPerNode": 192,
+    "defaultProcessorsPerNode": 48,
     "defaultMaxRunTime": "12:00:00",
     "defaultNodeCount": 1,
     "defaultQueue": "normal",
-    "deploymentPath": "kyclark/applications/stampede2-template-0.0.1/stampede",
+    "deploymentPath": "user/applications/app_name-version/stampede",
     "deploymentSystem": "data.iplantcollaborative.org",
-    "executionSystem": "tacc-stampede2-kyclark",
+    "executionSystem": "tacc-stampede2-user",
     "executionType": "HPC",
-    "helpURI": "",
-    "label": "Stampede2 Template",
-    "parallelism": "SERIAL",
+    "helpURI": "http://google.com",
+    "label": "demultiplexer",
+    "parallelism": "serial",
     "templatePath": "template.sh",
     "testPath": "test.sh",
     "modules": [
@@ -24,18 +24,17 @@
         "launcher"
     ],
     "tags": [
-        "imicrobe",
-        "agave"
+        "imicrobe"
     ],
     "ontology": [
         "http://sswapmeet.sswap.info/agave/apps/Application"
     ],
     "inputs": [
         {
-            "id": "INPUT",
+            "id": "BARCODE_LENGTH",
             "value": {
                 "default": "",
-                "order": 0,
+                "order": 1,
                 "validator": "",
                 "required": true,
                 "visible": true,
@@ -52,9 +51,37 @@
                 ]
             },
             "details": {
-                "description": "",
-                "label": "List of input files/directories",
-                "argument": "-i ",
+                "description": "Length of barcodes for your reads",
+                "label": "LABEL1",
+                "argument": "-b",
+                "repeatArgument": false,
+                "showArgument": true
+            }
+        },
+        {
+            "id": "MAPPING_FILE",
+            "value": {
+                "default": "",
+                "order": 2,
+                "validator": "",
+                "required": true,
+                "visible": true,
+                "enquote": false
+            },
+            "semantics": {
+                "ontology": [
+                    "http://sswapmeet.sswap.info/mime/application/X-bam"
+                ],
+                "minCardinality": 1,
+                "maxCardinality": -1,
+                "fileTypes": [
+                    "raw-0"
+                ]
+            },
+            "details": {
+                "description": "Path to the barcode mapping file",
+                "label": "LABEL2",
+                "argument": "-m",
                 "repeatArgument": false,
                 "showArgument": true
             }
@@ -62,10 +89,10 @@
     ],
     "parameters": [
         {
-            "id": "PVALUE",
+            "id": "INPUT_DIR",
             "value": {
-                "default": 0.01,
-                "type": "number",
+                "default": ".",
+                "type": "string",
                 "order": 1,
                 "required": false,
                 "visible": true,
@@ -73,9 +100,85 @@
                 "validator": ""
             },
             "details": {
+                "description": "Path to input directory",
+                "label": "PARAM1",
+                "argument": "-i",
+                "repeatArgument": false,
+                "showArgument": true
+            }
+        },
+        {
+            "id": "WORK_DIR",
+            "value": {
+                "default": ".",
+                "type": "string",
+                "order": 2,
+                "required": false,
+                "visible": true,
+                "enquote": false,
+                "validator": ""
+            },
+            "details": {
+                "description": "Path to working directory",
+                "label": "PARAM2",
+                "argument": "-w",
+                "repeatArgument": false,
+                "showArgument": true
+            }
+        },
+        {
+            "id": "HELP",
+            "value": {
+                "default": false,
+                "type": "boolean",
+                "order": 3,
+                "required": false,
+                "visible": true,
+                "enquote": false,
+                "validator": ""
+            },
+            "details": {
+                "description": "Show help messages and exit",
+                "label": "PARAM3",
+                "argument": "-h",
+                "repeatArgument": false,
+                "showArgument": true
+            }
+        },
+        {
+            "id": "CORE_COUNT",
+            "value": {
+                "default": 1,
+                "type": "number",
+                "order": 4,
+                "required": false,
+                "visible": true,
+                "enquote": false,
+                "validator": ""
+            },
+            "details": {
+                "description": "Number of cores to use",
+                "label": "PARAM4",
+                "argument": "-c",
+                "repeatArgument": false,
+                "showArgument": true
+            }
+        },
+        {
+            "id": "PAIRED_ENDS",
+            "value": {
+                "default": false,
+                "type": "boolean",
+                "order": 5,
+                "required": false,
+                "visible": true,
+                "enquote": false,
+                "validator": ""
+            },
+            "details": {
                 "description": "",
-                "label": "P-value",
-                "argument": "-p ",
+                "label": "PARAM5",
+                "argument": "-p",
                 "repeatArgument": false,
                 "showArgument": true
             }

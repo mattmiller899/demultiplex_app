@@ -1,6 +1,6 @@
 .PHONY: clean up template job app test
 
-APP = stampede2-template-0.0.1
+APP = stampede2-demultiplexer
 
 clean:
 	find . \( -name \*.out -o -name \*.param \) -exec rm {} \;

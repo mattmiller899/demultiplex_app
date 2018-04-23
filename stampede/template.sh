@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sh run.sh ${INPUT} ${PVALUE} 
+sh run.sh ${BARCODE_LENGTH} ${MAPPING_FILE} ${HELP} ${INPUT_DIR} ${WORK_DIR} ${CORE_COUNT} ${PAIRED_ENDS}

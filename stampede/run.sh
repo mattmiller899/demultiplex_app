@@ -12,58 +12,96 @@ module load launcher
 
 set -u
 
-INPUT=""
-PVALUE="0.01"
-IMG="lc.img"
+function ADVANCED_USAGE() {
+	echo "Usage: pipeline.py [-h] -i INPUT_DIR -w WORK_DIR"
+	echo "		-b BARCODE_LENGTH -m MAPPING_FILE [-p PAIRED_FILE]"
+	echo
+	echo "Required arguments:"
+    echo "  -i INPUT_DIR            path to the input directory"
+    echo "  -w WORK_DIR         path to the output directory" 
+    echo "  -b BARCODE_LENGTH       length of the barcodes (int)"
+    echo "  -m MAPPING_FILE         path to file containing information about the barcodes. Must be in the QIIME mapping file format"
+	echo
+    echo "Optional arguments:"
+	echo "	-h				show this help message and exit"
+	echo "	-p PAIRED_FILE			path to the input file's pair"
+	echo
+	exit 1
+}
 
-#
-# These are for the LAUNCHER. Ignore unless you need to parallelize 
-# jobs. TACC_LAUNCHER_DIR will be imported into your $ENV once you 
-# "module load launcher"
-#
-PARAMRUN="$TACC_LAUNCHER_DIR/paramrun"
-export LAUNCHER_PLUGIN_DIR="$TACC_LAUNCHER_DIR/plugins"
-export LAUNCHER_WORKDIR="$PWD"
-export LAUNCHER_RMI="SLURM"
-export LAUNCHER_SCHED="interleaved"
 
 function USAGE() {
-    printf "Usage:\n  %s -i INPUT [-p PVALUE]\n\n" "$(basename "$0")"
-
-    echo "Required arguments:"
-    echo " -i INPUT"
-    echo ""
+    echo "Usage: pipeline.py [-h] -i INPUT_DIR -w WORK_DIR"
+    echo "		-b BARCODE_LENGTH -m MAPPING_FILE [-p PAIRED_FILE]"
+	echo "Required arguments:"
+    echo "	-b BARCODE_LENGTH"
+    echo "	-m MAPPING_FILE"
+    echo "  -i INPUT_DIR"
+    echo "  -w WORK_DIR"
+    echo
     echo "Options:"
-    echo " -p PVALUE ($PVALUE)"
-    echo ""
-    exit "${1:-0}"
+    echo "	-h"
+	echo "	-p PAIRED_FILE"
+	echo
+    exit 1
 }
+INPUT_DIR=""
+WORK_DIR=""
+PAIRED_ENDS=""
+BARCODE_LENGTH=0
+MAPPING_FILE=""
+IMG="demultiplexer.img"
+
 
 [[ $# -eq 0 ]] && USAGE 1
 
-while getopts :i:p:h OPT; do
-    case $OPT in
-        i)
-            INPUT="$OPTARG"
-            ;;
-        h)
-            USAGE
-            ;;
-        p)
-            PVALUE="$OPTARG"
-            ;;
-        :)
-            echo "Error: Option -$OPTARG requires an argument."
-            exit 1
-            ;;
-        \?)
-            echo "Error: Invalid option: -${OPTARG:-""}"
-            exit 1
-    esac
+while getopts :i:w:b:m:p:h OPT; do
+  case $OPT in
+    h)
+      ADVANCED_USAGE
+      ;;
+    i)
+      INPUT_DIR="$OPTARG"
+      ;;
+    w)
+      WORK_DIR="$OPTARG"
+	  ;;
+	b)
+	  BARCODE_LENGTH=$OPTARG
+	  ;;
+	m)
+	  MAPPING_FILE="$OPTARG"
+	  ;;
+	p)
+	  PAIRED_ENDS="$OPTARG"
+	  ;;
+    :)
+      echo "Error: Option -$OPTARG requires an argument."
+      exit 1
+      ;;
+    \?)
+      echo "Error: Invalid option: -${OPTARG:-""}"
+      exit 1
+  esac
 done
 
-if [[ -z "$INPUT" ]]; then
-    echo "-i INPUT is required"
+if [[ $BARCODE_LENGTH -eq 0 ]]; then
+	echo "BARCODE_LENGTH is required"
+	exit 1
+fi
+
+if [[ $MAPPING_FILE -eq "" ]]; then
+	echo "MAPPING_FILE is required"
+	exit 1
+fi
+
+if [[ $WORK_DIR -eq "" ]]; then
+    echo "WORK_DIR is required"
+    exit 1
+fi
+
+if [[ $INPUT_DIR -eq "" ]]; then
+    echo "INPUT_DIR is required"
     exit 1
 fi
 
@@ -72,16 +110,22 @@ if [[ ! -f "$IMG" ]]; then
     exit 1
 fi
 
+PARAMRUN="$TACC_LAUNCHER_DIR/paramrun"
+export LAUNCHER_PLUGIN_DIR="$TACC_LAUNCHER_DIR/plugins"
+export LAUNCHER_WORKDIR="$PWD"
+export LAUNCHER_RMI="SLURM"
+export LAUNCHER_SCHED="interleaved"
+
 #
 # Detect if INPUT is a regular file or directory, expand to list of files
 #
 INPUT_FILES=$(mktemp)
-if [[ -f "$INPUT" ]]; then
-    echo "$INPUT" > "$INPUT_FILES"
-elif [[ -d "$INPUT" ]]; then
-    find "$INPUT" -type f > "$INPUT_FILES"
+if [[ -f "$INPUT_DIR" ]]; then
+    echo "$INPUT_DIR" > "$INPUT_FILES"
+elif [[ -d "$INPUT_DIR" ]]; then
+    find "$INPUT_DIR" -type f > "$INPUT_FILES"
 else
-    echo "-i \"$INPUT\" is neither file nor directory"
+    echo "-i \"$INPUT_DIR\" is neither file nor directory"
     exit 1
 fi
 
@@ -91,7 +135,7 @@ if [[ $NUM_INPUT -lt 1 ]]; then
     exit 1
 fi
 
-echo "I will process NUM_INPUT \"$NUM_INPUT\" at PVALUE \"$PVALUE\""
+echo "I will process NUM_INPUT \"$NUM_INPUT\" files"
 cat -n "$INPUT_FILES"
 
 #
@@ -100,7 +144,11 @@ cat -n "$INPUT_FILES"
 PARAM="$$.param"
 cat /dev/null > "$PARAM"
 while read -r FILE; do
-    echo "singularity exec $IMG lc.py $FILE" >> "$PARAM"
+    if [[ $PAIRED_ENDS -eq "" ]]; then
+        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH" >> "$PARAM"
+    else
+        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH -p $PAIRED_ENDS" >> "$PARAM"
+    fi
 done < "$INPUT_FILES"
 
 echo "Starting Launcher"
@@ -120,3 +168,4 @@ unset LAUNCHER_PPN
 rm "$PARAM"
 
 echo "Done."
+
