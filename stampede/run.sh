@@ -14,17 +14,17 @@ set -u
 
 function ADVANCED_USAGE() {
 	echo "Usage: pipeline.py [-h] -i INPUT_DIR -w WORK_DIR"
-	echo "		-b BARCODE_LENGTH -m MAPPING_FILE [-p PAIRED_FILE]"
+	echo "		-b BARCODE_LENGTH -m MAPPING_FILE [-p PAIRED_DIR]"
 	echo
 	echo "Required arguments:"
-    echo "  -i INPUT_DIR            path to the input directory"
+    echo "  -i INPUT_DIR            path to the input directory (or single file)"
     echo "  -w WORK_DIR         path to the output directory" 
     echo "  -b BARCODE_LENGTH       length of the barcodes (int)"
     echo "  -m MAPPING_FILE         path to file containing information about the barcodes. Must be in the QIIME mapping file format"
 	echo
     echo "Optional arguments:"
 	echo "	-h				show this help message and exit"
-	echo "	-p PAIRED_FILE			path to the input file's pair"
+	echo "	-p PAIRED_DIR              path to the paired end directory (or single file)"
 	echo
 	exit 1
 }
@@ -32,7 +32,7 @@ function ADVANCED_USAGE() {
 
 function USAGE() {
     echo "Usage: pipeline.py [-h] -i INPUT_DIR -w WORK_DIR"
-    echo "		-b BARCODE_LENGTH -m MAPPING_FILE [-p PAIRED_FILE]"
+    echo "		-b BARCODE_LENGTH -m MAPPING_FILE [-p PAIRED_DIR]"
 	echo "Required arguments:"
     echo "	-b BARCODE_LENGTH"
     echo "	-m MAPPING_FILE"
@@ -41,13 +41,13 @@ function USAGE() {
     echo
     echo "Options:"
     echo "	-h"
-	echo "	-p PAIRED_FILE"
+	echo "	-p PAIRED_DIR"
 	echo
     exit 1
 }
 INPUT_DIR=""
 WORK_DIR=""
-PAIRED_ENDS=""
+PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
 IMG="demultiplexer.img"
@@ -73,7 +73,7 @@ while getopts :i:w:b:m:p:h OPT; do
 	  MAPPING_FILE="$OPTARG"
 	  ;;
 	p)
-	  PAIRED_ENDS="$OPTARG"
+	  PAIRED_DIR="$OPTARG"
 	  ;;
     :)
       echo "Error: Option -$OPTARG requires an argument."
@@ -144,10 +144,10 @@ cat -n "$INPUT_FILES"
 PARAM="$$.param"
 cat /dev/null > "$PARAM"
 while read -r FILE; do
-    if [[ $PAIRED_ENDS -eq "" ]]; then
+    if [[ $PAIRED_DIR -eq "" ]]; then
         echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH" >> "$PARAM"
     else
-        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH -p $PAIRED_ENDS" >> "$PARAM"
+        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH -p $PAIRED_DIR" >> "$PARAM"
     fi
 done < "$INPUT_FILES"
 

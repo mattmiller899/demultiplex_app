@@ -5,7 +5,7 @@ From: ubuntu:latest
     PATH=/app/stampede2-template/scripts:$PATH
 
 %runscript
-    exec run_pipeline.sh $@
+    /miniconda/bin/python pipeline.py $@
 
 %post
     apt-get update
@@ -29,4 +29,4 @@ From: ubuntu:latest
     chmod u+x Miniconda-latest-Linux-x86_64.sh
     ./Miniconda-latest-Linux-x86_64.sh -b -p /miniconda
     /miniconda/bin/conda install argparse glob gzip itertools logging os re shutil sys scandir operator subprocess traceback
-
+    /miniconda/bin/conda install qiime matplotlib=1.4.3 mock nose -c bioconda

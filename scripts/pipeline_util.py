@@ -54,13 +54,13 @@ def get_forward_fastq_files(input_dir):
     return forward_fastq_files
 
 
-def get_associated_reverse_fastq_fp(forward_fp):
+def get_associated_reverse_fastq_fp(forward_fp, reverse_input_dir):
     forward_input_dir, forward_basename = os.path.split(forward_fp)
     reverse_fastq_basename = re.sub(
         string=forward_basename,
         pattern=r'_([0R])1',
         repl=lambda m: '_{}2'.format(m.group(1)))
-    reverse_fastq_fp = os.path.join(forward_input_dir, reverse_fastq_basename)
+    reverse_fastq_fp = os.path.join(reverse_input_dir, reverse_fastq_basename)
     return reverse_fastq_fp
 
 

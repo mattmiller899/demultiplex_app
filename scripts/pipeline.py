@@ -16,7 +16,7 @@ import shutil
 import sys
 import scandir
 
-from cluster_16S.pipeline_util import create_output_dir, get_forward_fastq_files, get_associated_reverse_fastq_fp, get_associated_barcodes_fp, run_cmd, PipelineException, get_associated_barcodes_unpaired_fp
+from pipeline_util import create_output_dir, get_forward_fastq_files, get_associated_reverse_fastq_fp, get_associated_barcodes_fp, run_cmd, PipelineException, get_associated_barcodes_unpaired_fp
 from cluster_16S.fasta_qual_to_fastq import fasta_qual_to_fastq
 
 
@@ -42,7 +42,7 @@ def get_args():
                                  'file format')
 
     arg_parser.add_argument('-p', '--paired-ends', default='', 
-                            help='path to paired end file')
+                            help='path to paired end directory')
 
     '''
     arg_parser.add_argument('--uchime-ref-db-fp', default='/16SrDNA/pr2/pr2_gb203_version_4.5.fasta',
@@ -85,25 +85,14 @@ class Pipeline:
 
         self.mapping_file = mapping_file
         self.barcode_length = barcode_length
-        self.paired_end_file = paired_ends
+        self.paired_ends_path = paired_ends
         self.paired_ends = False
-        if self.paired_end_file != '':
+        self.paired_ends_dir = False
+        if self.paired_ends_path != '':
             self.paired_ends = True
+            if os.path.isdir(self.paired_ends_path):
+                self.paired_ends_dir = True
 
-        '''
-        self.pear_min_overlap = pear_min_overlap
-        self.pear_max_assembly_length = pear_max_assembly_length
-        self.pear_min_assembly_length = pear_min_assembly_length
-
-        self.vsearch_filter_maxee = vsearch_filter_maxee
-        self.vsearch_filter_trunclen = vsearch_filter_trunclen
-
-        self.chimera_detection_usearch = chimera_detection_usearch
-
-        self.vsearch_derep_minuniquesize = vsearch_derep_minuniquesize
-
-        self.uchime_ref_db_fp = uchime_ref_db_fp
-        '''
 
     def run(self, input_file):
         output_dir_list = list()
@@ -112,17 +101,9 @@ class Pipeline:
         output_dir_list.append(self.step_03_demultiplex(input_dir=output_dir_list[-1]))
         if self.paired_ends is True:
             output_dir_list.append(self.step_04_make_paired_end_files(input_dir=output_dir_list[-1]))
-        '''
-        output_dir_list.append(self.step_05_copy_and_compress(input_dir=output_dir_list[-1]))
-        output_dir_list.append(self.step_06_remove_primers(input_dir=output_dir_list[-1]))
-        
-        output_dir_list.append(self.step_06_dereplicate_sort_remove_low_abundance_reads(input_dir=output_dir_list[-1]))
-        output_dir_list.append(self.step_07_cluster_97_percent(input_dir=output_dir_list[-1]))
-        output_dir_list.append(self.step_08_reference_based_chimera_detection(input_dir=output_dir_list[-1]))
-        output_dir_list.append(self.step_09_create_otu_table(input_dir=output_dir_list[-1]))
-        '''
 
         return output_dir_list
+
 
     def initialize_step(self):
         function_name = sys._getframe(1).f_code.co_name
@@ -133,6 +114,7 @@ class Pipeline:
         name, ext = os.path.splitext(self.input_file)
         fileout_dir = create_output_dir(output_dir_name=os.path.basename(name), parent_dir=output_dir)
         return log, fileout_dir
+
 
     def complete_step(self, log, output_dir):
         return
@@ -206,12 +188,16 @@ class Pipeline:
         else:
             log.info('Going to remove barcodes')
             if self.paired_ends is True:
+                if self.paired_ends_dir is True:
+                    paired_end_file = get_associated_reverse_fastq_fp(forward_fp=input_file, reverse_input_dir=self.paired_ends_path)
+                else:
+                    paired_end_file = self.paired_ends_path
                 log.info('removing barcodes from forward reads "%s"', input_file)
-                log.info('removing barcodes from reverse reads "%s"', self.paired_end_file)
+                log.info('removing barcodes from reverse reads "%s"', paired_end_file)
                 run_cmd([
                         'extract_barcodes.py',
                         '-f', input_file,
-                        '-r', self.paired_end_file,
+                        '-r', paired_end_file,
                         '-c', 'barcode_paired_end',
                         '-m', str(self.mapping_file),
                         '-l', str(self.barcode_length),
@@ -256,7 +242,7 @@ class Pipeline:
             log.info('Splitting library based on barcodes')
             if self.paired_ends is True:
                 for forward_fastq_fp in get_forward_fastq_files(input_dir=input_dir):
-                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp)
+                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp, reverse_input_dir=input_dir)
                     barcodes_fp = get_associated_barcodes_fp(forward_fastq_fp)
                     log.info('Splitting libraries of "%s" and "%s" with "%s"', forward_fastq_fp, reverse_fastq_fp, barcodes_fp)
                     #TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
