@@ -3,9 +3,10 @@ From: ubuntu:latest
 
 %environment
     PATH="/app/demultiplex_app/scripts":$PATH
+    PATH="/miniconda/lib/python2.7/site-packages/qiime":$PATH
 
 %runscript
-    /miniconda/bin/python pipeline.py $@
+    /miniconda/bin/python /app/demultiplex_app/scripts/pipeline.py $@
 
 %post
     apt-get update
@@ -30,3 +31,4 @@ From: ubuntu:latest
     ./Miniconda-latest-Linux-x86_64.sh -b -p /miniconda
     /miniconda/bin/conda install -c anaconda scandir
     /miniconda/bin/conda install qiime matplotlib=1.4.3 mock nose -c bioconda
+    /miniconda/bin/pip install --upgrade numpy
