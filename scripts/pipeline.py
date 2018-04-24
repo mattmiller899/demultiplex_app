@@ -195,7 +195,7 @@ class Pipeline:
                 log.info('removing barcodes from forward reads "%s"', input_file)
                 log.info('removing barcodes from reverse reads "%s"', paired_end_file)
                 run_cmd([
-                        '/miniconda/bin/python /miniconda/lib/python2.7/site-packages/qiime/extract_barcodes.py',
+                        '/miniconda/bin/python', '/miniconda/lib/python2.7/site-packages/qiime/extract_barcodes.py',
                         '-f', input_file,
                         '-r', paired_end_file,
                         '-c', 'barcode_paired_end',
@@ -215,7 +215,7 @@ class Pipeline:
             else:
                 log.info('removing barcodes from "%s"', input_file)
                 run_cmd([
-                    '/miniconda/bin/python /miniconda/lib/python2.7/site-packages/qiime/extract_barcodes.py',
+                    '/miniconda/bin/python', '/miniconda/lib/python2.7/site-packages/qiime/extract_barcodes.py',
                     '-f', input_file,
                     '-c', 'barcode_single_end',
                     '-m', str(self.mapping_file),
