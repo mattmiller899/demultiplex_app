@@ -2,7 +2,7 @@ BootStrap: docker
 From: ubuntu:latest
 
 %environment
-    PATH=/app/demultiplex_app/scripts:$PATH
+    PATH=/app/demultiplex_app/scripts/:$PATH
 
 %runscript
     /miniconda/bin/python pipeline.py $@
