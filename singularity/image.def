@@ -28,5 +28,5 @@ From: ubuntu:latest
     wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
     chmod u+x Miniconda-latest-Linux-x86_64.sh
     ./Miniconda-latest-Linux-x86_64.sh -b -p /miniconda
-    /miniconda/bin/conda install argparse glob gzip itertools logging os re shutil sys scandir operator subprocess traceback
+    /miniconda/bin/conda install -c anaconda scandir
     /miniconda/bin/conda install qiime matplotlib=1.4.3 mock nose -c bioconda
