@@ -14,7 +14,6 @@ import os
 import re
 import shutil
 import sys
-import scandir
 import qiime
 
 from pipeline_util import create_output_dir, get_forward_fastq_files, get_associated_reverse_fastq_fp, get_associated_barcodes_fp, run_cmd, PipelineException, get_associated_barcodes_unpaired_fp
