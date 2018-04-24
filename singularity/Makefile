@@ -1,7 +1,7 @@
 SINGULARITY = /usr/local/bin/singularity
 IMG_NAME = demultiplexer.img
 DEF_NAME = image.def
-SIZE = 512
+SIZE = 2048
 
 run:
 	sudo $(SINGULARITY) run $(IMG_NAME)
