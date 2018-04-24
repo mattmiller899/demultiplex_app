@@ -5,7 +5,7 @@ From: ubuntu:latest
     PATH=/app/demultiplex_app/scripts/:$PATH
 
 %runscript
-    /miniconda/bin/python pipeline.py $@
+    /miniconda/bin/python /app/demultiplex_app/scripts/pipeline.py $@
 
 %post
     apt-get update
