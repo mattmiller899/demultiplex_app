@@ -10,7 +10,7 @@ From: ubuntu:latest
 
 %post
     apt-get update
-    apt-get install -y locales git wget build-essential libglib2.0-0
+    apt-get install -y locales git wget build-essential libglib2.0-0 libsm6 libxrender1 libfontconfig1
     locale-gen en_US.UTF-8
 
     #
