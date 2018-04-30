@@ -129,6 +129,16 @@ else
     exit 1
 fi
 
+if [[ ! -f "$PAIRED_DIR" && ! -d "$PAIRED_DIR" && "" != "$PAIRED_DIR" ]]; then
+    echo "-p \"$PAIRED_DIR\" is neither file nor directory"
+    exit 1
+fi
+
+if [[ ! -f "$MAPPING_FILE" ]]; then
+    echo "-m \"$MAPPING_FILE\" is not a real file"
+    exit 1
+fi
+
 NUM_INPUT=$(wc -l "$INPUT_FILES" | awk '{print $1}')
 if [[ $NUM_INPUT -lt 1 ]]; then
     echo "There are no files to process."
