@@ -117,7 +117,6 @@ class Pipeline:
 
 
     def complete_step(self, log, output_dir):
-        return
         output_dir_list = sorted(os.listdir(output_dir))
         if len(output_dir_list) == 0:
             raise PipelineException('ERROR: no output files in directory "{}"'.format(output_dir))
