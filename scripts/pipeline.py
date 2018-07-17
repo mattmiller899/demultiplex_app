@@ -143,7 +143,7 @@ class Pipeline:
                         run_cmd(
                             [
                                 'fastqc',
-                                '--threads', 1,
+                                '--threads', '1',
                                 '--outdir', fastqc_output_dir,
                                 file_fp
                             ],
@@ -173,7 +173,7 @@ class Pipeline:
                             run_cmd(
                                 [
                                     'fastqc',
-                                    '--threads', 1,
+                                    '--threads', '1',
                                     '--outdir', folder_output_dir,
                                     file_fp
                                 ],
