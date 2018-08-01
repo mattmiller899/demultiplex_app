@@ -84,6 +84,18 @@ def get_associated_barcodes_unpaired_fp(forward_fp):
     return barcodes_fastq_fp
 
 
+def rename_files_in_dir(output_dir, file_name):
+    input_glob = os.path.join(output_dir, '*')
+    for input_file in glob.glob(input_glob):
+        if 'reads1' in input_file:
+            old_basename = 'R1.fastq'
+        elif 'reads2' in input_file:
+            old_basename = 'R2.fastq'
+        else:
+            old_basename = os.path.basename(input_file)
+        os.rename(input_file, os.path.join(output_dir, '{}_{}'.format(file_name, old_basename)))
+
+
 def run_cmd(cmd_line_list, log_file, **kwargs):
     log = logging.getLogger(name=__name__)
     try:

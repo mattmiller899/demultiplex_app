@@ -43,7 +43,10 @@ def get_args():
                                  'file format')
 
     arg_parser.add_argument('-p', '--paired-ends', default='', 
-                            help='path to paired end directory')
+                            help='path to paired end file or the directory it is contained in (code will find paired end file based on -i file name')
+
+    arg_parser.add_argument('-d', '--index-file', default='',
+                            help='path to index file')
 
     '''
     arg_parser.add_argument('--uchime-ref-db-fp', default='/16SrDNA/pr2/pr2_gb203_version_4.5.fasta',
@@ -78,6 +81,7 @@ class Pipeline:
             mapping_file,
             barcode_length,
             paired_ends,
+            index_file,
             **kwargs  # allows some command line arguments to be ignored
             ):
         
@@ -93,11 +97,20 @@ class Pipeline:
             self.paired_ends = True
             if os.path.isdir(self.paired_ends_path):
                 self.paired_ends_dir = True
+        self.index_file_path = index_file
+        self.index_file = False
+        if self.index_file_path != '':
+            self.index_file = True
+            
 
 
     def run(self, input_file):
         output_dir_list = list()
-        output_dir_list.append(self.step_01_remove_barcodes(input_file=input_file))
+        if self.index_file is False:
+            output_dir_list.append(self.step_01_remove_barcodes(input_file=input_file))
+            output_dir_list.append(self.step_02_split_libraries(input_dir=output_dir_list[-1]))
+        else:
+            output_dir_list.append(self.step_02_split_libraries(input_file=input_file))
         output_dir_list.append(self.step_02_split_libraries(input_dir=output_dir_list[-1]))
         output_dir_list.append(self.step_03_demultiplex(input_dir=output_dir_list[-1]))
         if self.paired_ends is True:
@@ -118,7 +131,7 @@ class Pipeline:
 
 
     def complete_step(self, log, output_dir):
-	return
+	    return
         output_dir_list = sorted(os.listdir(output_dir))
         if len(output_dir_list) == 0:
             raise PipelineException('ERROR: no output files in directory "{}"'.format(output_dir))
@@ -210,9 +223,10 @@ class Pipeline:
                 forward_fastq_basename = os.path.basename(input_file)
                 tmp = re.split('_([0R])1', forward_fastq_basename)
                 file_name = tmp[0] + re.split('.fastq', tmp[2])[0]
-                os.rename(os.path.join(output_dir, 'reads1.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R1.fastq'))
-                os.rename(os.path.join(output_dir, 'reads2.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R2.fastq'))
-                os.rename(os.path.join(output_dir, 'barcodes.fastq'), os.path.join(output_dir, file_name + '_barcodes.fastq'))
+                rename_files_in_dir(output_dir, file_name)
+                #os.rename(os.path.join(output_dir, 'reads1.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R1.fastq'))
+                #os.rename(os.path.join(output_dir, 'reads2.fastq'), os.path.join(output_dir, file_name + '_debarcoded_R2.fastq'))
+                #os.rename(os.path.join(output_dir, 'barcodes.fastq'), os.path.join(output_dir, file_name + '_barcodes.fastq'))
             else:
                 log.info('removing barcodes from "%s"', input_file)
                 run_cmd([
@@ -227,82 +241,97 @@ class Pipeline:
                 )
                 file_basename = os.path.basename(input_file)
                 file_name = re.split('.fastq', file_basename)[0]
-                os.rename(os.path.join(output_dir, 'reads.fastq'),
-                          os.path.join(output_dir, file_name + '_debarcoded.fastq'))
-                os.rename(os.path.join(output_dir, 'barcodes.fastq'),
-                          os.path.join(output_dir, file_name + '_barcodes.fastq'))
+                rename_files_in_dir(output_dir, file_name)
+                #os.rename(os.path.join(output_dir, 'reads.fastq'),
+                #          os.path.join(output_dir, file_name + '_debarcoded.fastq'))
+                #os.rename(os.path.join(output_dir, 'barcodes.fastq'),
+                #          os.path.join(output_dir, file_name + '_barcodes.fastq'))
         self.complete_step(log, output_dir)
         return output_dir
 
 
-    def step_02_split_libraries(self, input_dir):
+    def step_02_split_libraries(self, input_dir='', input_file=''):
         log, output_dir = self.initialize_step()
         if len(os.listdir(output_dir)) > 0:
             log.info('output directory "%s" is not empty, this step will be skipped', output_dir)
         else:
             log.info('Splitting library based on barcodes')
             if self.paired_ends is True:
-                for forward_fastq_fp in get_forward_fastq_files(input_dir=input_dir):
-                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp, reverse_input_dir=input_dir)
+                #Check if index file is added (which skips step 01)
+                if input_file is not '':
+                    forward_fastq_fp = input_file
+                    barcodes_fp = self.index_file_path
+                else:
+                    forward_fastq_fp = get_forward_fastq_file(input_dir=input_dir) 
                     barcodes_fp = get_associated_barcodes_fp(forward_fastq_fp)
-                    log.info('Splitting libraries of "%s" and "%s" with "%s"', forward_fastq_fp, reverse_fastq_fp, barcodes_fp)
-                    #TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
-                    run_cmd([
-                            'python', '/miniconda/bin/split_libraries_fastq.py',
-                            '-o', str(output_dir),
-                            '-b', str(barcodes_fp) + ',' + str(barcodes_fp),
-                            '-i', str(forward_fastq_fp) + ',' + str(reverse_fastq_fp),
-                            '-m', str(self.mapping_file),
-                            '--barcode_type', str(self.barcode_length),
-                            '-q', '0',
-                            '--max_barcode_errors', '0',
-                            '--rev_comp_barcode',
-                            '--phred_offset=33',
-                            '--store_demultiplexed_fastq'
-                        ],
-                        log_file=os.path.join(output_dir, 'log')
-                    )
-                    forward_fastq_basename = os.path.basename(forward_fastq_fp)
-                    file_name = re.split('_([0R])1', forward_fastq_basename)[0]
-                    os.rename(os.path.join(output_dir, 'seqs.fastq'),
-                              os.path.join(output_dir, file_name + '_seqs.fastq'))
-                    os.rename(os.path.join(output_dir, 'histograms.txt'),
-                              os.path.join(output_dir, file_name + '_histograms.txt'))
-                    os.rename(os.path.join(output_dir, 'split_library_log.txt'),
-                              os.path.join(output_dir, file_name + '_split_library_log.txt'))
-                    os.remove(os.path.join(output_dir, 'seqs.fna'))
+                if self.paired_ends_dir is True:
+                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp, reverse_input_dir=self.paired_ends_path)
+                else:
+                    reverse_fastq_fp = self.paired_ends_path
+                log.info('Splitting libraries of "%s" and "%s" with "%s"', forward_fastq_fp, reverse_fastq_fp, barcodes_fp)
+                #TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
+                run_cmd([
+                        'python', '/miniconda/bin/split_libraries_fastq.py',
+                        '-o', str(output_dir),
+                        '-b', str(barcodes_fp) + ',' + str(barcodes_fp),
+                        '-i', str(forward_fastq_fp) + ',' + str(reverse_fastq_fp),
+                        '-m', str(self.mapping_file),
+                        '--barcode_type', str(self.barcode_length),
+                        '-q', '0',
+                        '--max_barcode_errors', '0',
+                        '--rev_comp_barcode',
+                        '--phred_offset=33',
+                        '--store_demultiplexed_fastq'
+                    ],
+                    log_file=os.path.join(output_dir, 'log')
+                ) 
+                forward_fastq_basename = os.path.basename(forward_fastq_fp)
+                file_name = re.split('_([0R])1', forward_fastq_basename)[0]
+                os.remove(os.path.join(output_dir, 'seqs.fna'))
+                rename_files_in_dir(output_dir, file_name)
+                    #os.rename(os.path.join(output_dir, 'seqs.fastq'),
+                    #          os.path.join(output_dir, file_name + '_seqs.fastq'))
+                    #os.rename(os.path.join(output_dir, 'histograms.txt'),
+                    #          os.path.join(output_dir, file_name + '_histograms.txt'))
+                    #os.rename(os.path.join(output_dir, 'split_library_log.txt'),
+                    #          os.path.join(output_dir, file_name + '_split_library_log.txt'))
+                    #os.remove(os.path.join(output_dir, 'seqs.fna'))
             else:
-                input_files_glob = os.path.join(input_dir, '*.fastq*')
-                for input_file in glob.glob(input_files_glob):
-                    log.info("Input file: %s", input_file)
-                    if "barcodes.fastq" not in input_file:
-                        barcodes_fp = get_associated_barcodes_unpaired_fp(input_file)
-                        log.info('Splitting libraries of "%s" with "%s"', input_file, barcodes_fp)
-                        # TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
-                        run_cmd([
-                            'python', '/miniconda/bin/split_libraries_fastq.py',
-                            '-o', str(output_dir),
-                            '-b', str(barcodes_fp),
-                            '-i', str(input_file),
-                            '-m', str(self.mapping_file),
-                            '--barcode_type', str(self.barcode_length),
-                            '-q', '0',
-                            '--max_barcode_errors', '0',
-                            '--rev_comp_barcode',
-                            '--phred_offset=33',
-                            '--store_demultiplexed_fastq'
-                            ],
-                            log_file=os.path.join(output_dir, 'log')
-                        )
-                        file_basename = os.path.basename(input_file)
-                        file_name = re.split('.fastq', file_basename)[0]
-                        os.rename(os.path.join(output_dir, 'seqs.fastq'),
-                                  os.path.join(output_dir, file_name + '_seqs.fastq'))
-                        os.rename(os.path.join(output_dir, 'histograms.txt'),
-                                  os.path.join(output_dir, file_name + '_histograms.txt'))
-                        os.rename(os.path.join(output_dir, 'split_library_log.txt'),
-                                  os.path.join(output_dir, file_name + '_split_library_log.txt'))
-                        os.remove(os.path.join(output_dir, 'seqs.fna'))
+                if input_file is not '':
+                    in_file = input_file
+                    barcodes_fp = self.index_file_path
+                else: 
+                    input_file_glob = os.path.join(input_dir, 'reads*.fastq*')
+                    in_file = glob.glob(input_file_glob)[0]
+                    barcodes_fp = get_associated_barcodes_unpaired_fp(in_file)
+                log.info('Splitting libraries of "%s" with "%s"', in_file, barcodes_fp)
+                # TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
+                run_cmd([
+                    'python', '/miniconda/bin/split_libraries_fastq.py',
+                    '-o', str(output_dir),
+                    '-b', str(barcodes_fp),
+                    '-i', str(in_file),
+                    '-m', str(self.mapping_file),
+                    '--barcode_type', str(self.barcode_length),
+                    '-q', '0',
+                    '--max_barcode_errors', '0',
+                    '--rev_comp_barcode',
+                    '--phred_offset=33',
+                    '--store_demultiplexed_fastq'
+                    ],
+                    log_file=os.path.join(output_dir, 'log')
+                )
+                file_basename = os.path.basename(in_file)
+                file_name = re.split('.fastq', file_basename)[0]
+                os.remove(os.path.join(output_dir, 'seqs.fna'))
+                rename_files_in_dir(output_dir, file_name)
+                    #os.rename(os.path.join(output_dir, 'seqs.fastq'),
+                    #          os.path.join(output_dir, file_name + '_seqs.fastq'))
+                    #os.rename(os.path.join(output_dir, 'histograms.txt'),
+                    #          os.path.join(output_dir, file_name + '_histograms.txt'))
+                    #os.rename(os.path.join(output_dir, 'split_library_log.txt'),
+                    #          os.path.join(output_dir, file_name + '_split_library_log.txt'))
+                    #os.remove(os.path.join(output_dir, 'seqs.fna'))
         self.complete_step(log, output_dir)
         return output_dir
 
@@ -327,9 +356,10 @@ class Pipeline:
                     ],
                     log_file=os.path.join(output_dir, 'log')
                 )
-                for sample_file in glob.glob(os.path.join(output_dir, '*.fastq')):
-                    sample_file_basename = os.path.basename(sample_file)
-                    os.rename(sample_file, os.path.join(output_dir, file_name + '_' + sample_file_basename))
+                rename_files_in_dir(output_dir, file_name)
+                #for sample_file in glob.glob(os.path.join(output_dir, '*.fastq')):
+                #    sample_file_basename = os.path.basename(sample_file)
+                #    os.rename(sample_file, os.path.join(output_dir, file_name + '_' + sample_file_basename))
 
         self.complete_step(log, output_dir)
         return output_dir
