@@ -44,15 +44,21 @@ def create_output_dir(output_dir_name, parent_dir=None, input_dir=None):
     return output_dir
 
 
-def get_forward_fastq_files(input_dir):
+def get_forward_fastq_file(input_dir):
     log = logging.getLogger(name=__name__)
+    file_list = os.listdir(input_dir)
+    forward_fastq = [f for f in file_list if '_R1.fastq' in f]
+    if len(forward_fastq) != 1:
+        raise PipelineException('found incorrect # of forward reads in "{}" len {}'.format(input_dir, len(forward_fastq)))
+    return os.path.join(input_dir, forward_fastq[0])
+    """
     input_glob = os.path.join(input_dir, '*_[R0]1*.fastq*')
     log.info('searching for forward read files with glob "%s"', input_glob)
     forward_fastq_files = glob.glob(input_glob)
     if len(forward_fastq_files) == 0:
         raise PipelineException('found no forward reads from glob "{}"'.format(input_glob))
     return forward_fastq_files
-
+    """
 
 def get_associated_reverse_fastq_fp(forward_fp, reverse_input_dir):
     forward_input_dir, forward_basename = os.path.split(forward_fp)
@@ -68,7 +74,7 @@ def get_associated_barcodes_fp(forward_fp):
     forward_input_dir, forward_basename = os.path.split(forward_fp)
     barcodes_fastq_basename = re.sub(
         string=forward_basename,
-        pattern='_debarcoded_R1',
+        pattern=r'_([0R])1',
         repl='_barcodes')
     barcodes_fastq_fp = os.path.join(forward_input_dir, barcodes_fastq_basename)
     return barcodes_fastq_fp
@@ -78,7 +84,7 @@ def get_associated_barcodes_unpaired_fp(forward_fp):
     forward_input_dir, forward_basename = os.path.split(forward_fp)
     barcodes_fastq_basename = re.sub(
         string=forward_basename,
-        pattern='_debarcoded',
+        pattern='_reads',
         repl='_barcodes')
     barcodes_fastq_fp = os.path.join(forward_input_dir, barcodes_fastq_basename)
     return barcodes_fastq_fp
@@ -91,6 +97,8 @@ def rename_files_in_dir(output_dir, file_name):
             old_basename = 'R1.fastq'
         elif 'reads2' in input_file:
             old_basename = 'R2.fastq'
+        elif os.path.basename(input_file) == 'log':
+            continue
         else:
             old_basename = os.path.basename(input_file)
         os.rename(input_file, os.path.join(output_dir, '{}_{}'.format(file_name, old_basename)))
@@ -99,14 +107,14 @@ def rename_files_in_dir(output_dir, file_name):
 def run_cmd(cmd_line_list, log_file, **kwargs):
     log = logging.getLogger(name=__name__)
     try:
-        with open(log_file, 'at') as log_file:
+        with open(log_file, 'a') as log_file:
             if cmd_line_list[0] == 'complete':
                 tmp = cmd_line_list[-1]
                 tmp = ' '.join(tmp)
                 cmd_line_list[-1] = tmp
                 cmd_line_list.remove('complete')
             cmd_line_str = ' '.join((str(x) for x in cmd_line_list))
-            log.info('executing "%s"', cmd_line_str)
+            #log.info('executing "%s"', cmd_line_str)
             log_file.write('executing "{}"'.format(cmd_line_str))
             output = subprocess.call(
                 cmd_line_list,

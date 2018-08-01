@@ -17,7 +17,7 @@ import sys
 import qiime
 import scandir
 
-from pipeline_util import create_output_dir, get_forward_fastq_files, get_associated_reverse_fastq_fp, get_associated_barcodes_fp, run_cmd, PipelineException, get_associated_barcodes_unpaired_fp
+from pipeline_util import *
 from fasta_qual_to_fastq import fasta_qual_to_fastq
 
 
@@ -111,7 +111,6 @@ class Pipeline:
             output_dir_list.append(self.step_02_split_libraries(input_dir=output_dir_list[-1]))
         else:
             output_dir_list.append(self.step_02_split_libraries(input_file=input_file))
-        output_dir_list.append(self.step_02_split_libraries(input_dir=output_dir_list[-1]))
         output_dir_list.append(self.step_03_demultiplex(input_dir=output_dir_list[-1]))
         if self.paired_ends is True:
             output_dir_list.append(self.step_04_make_paired_end_files(input_dir=output_dir_list[-1]))
@@ -122,6 +121,7 @@ class Pipeline:
     def initialize_step(self):
         function_name = sys._getframe(1).f_code.co_name
         log = logging.getLogger(name=function_name)
+        log.setLevel(logging.INFO)
         #Make step output_dir
         output_dir = create_output_dir(output_dir_name=function_name, parent_dir=self.work_dir)
         #Make specific file output_dir
@@ -131,7 +131,8 @@ class Pipeline:
 
 
     def complete_step(self, log, output_dir):
-	    return
+        return
+        """
         output_dir_list = sorted(os.listdir(output_dir))
         if len(output_dir_list) == 0:
             raise PipelineException('ERROR: no output files in directory "{}"'.format(output_dir))
@@ -193,7 +194,7 @@ class Pipeline:
                                 ],
                                 log_file=os.path.join(fastqc_output_dir, 'log')
                             )
-
+        """
 
     def step_01_remove_barcodes(self, input_file):
         log, output_dir = self.initialize_step()
@@ -209,7 +210,8 @@ class Pipeline:
                 log.info('removing barcodes from forward reads "%s"', input_file)
                 log.info('removing barcodes from reverse reads "%s"', paired_end_file)
                 run_cmd([
-                        'python', '/miniconda/bin/extract_barcodes.py',
+                        #'python', '/miniconda/bin/extract_barcodes.py',
+                        'extract_barcodes.py',
                         '-f', input_file,
                         '-r', paired_end_file,
                         '-c', 'barcode_paired_end',
@@ -230,7 +232,8 @@ class Pipeline:
             else:
                 log.info('removing barcodes from "%s"', input_file)
                 run_cmd([
-                    'python', '/miniconda/bin/extract_barcodes.py',
+                    #'python', '/miniconda/bin/extract_barcodes.py',
+                    'extract_barcodes.py',
                     '-f', input_file,
                     '-c', 'barcode_single_end',
                     '-m', str(self.mapping_file),
@@ -261,17 +264,19 @@ class Pipeline:
                 if input_file is not '':
                     forward_fastq_fp = input_file
                     barcodes_fp = self.index_file_path
+                    if self.paired_ends_dir is True:
+                        reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp, reverse_input_dir=self.paired_ends_path)
+                    else:
+                        reverse_fastq_fp = self.paired_ends_path
                 else:
                     forward_fastq_fp = get_forward_fastq_file(input_dir=input_dir) 
                     barcodes_fp = get_associated_barcodes_fp(forward_fastq_fp)
-                if self.paired_ends_dir is True:
-                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp, reverse_input_dir=self.paired_ends_path)
-                else:
-                    reverse_fastq_fp = self.paired_ends_path
+                    reverse_fastq_fp = get_associated_reverse_fastq_fp(forward_fp=forward_fastq_fp, reverse_input_dir=input_dir)
                 log.info('Splitting libraries of "%s" and "%s" with "%s"', forward_fastq_fp, reverse_fastq_fp, barcodes_fp)
                 #TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
                 run_cmd([
-                        'python', '/miniconda/bin/split_libraries_fastq.py',
+                        #'python', '/miniconda/bin/split_libraries_fastq.py',
+                        'split_libraries_fastq.py',
                         '-o', str(output_dir),
                         '-b', str(barcodes_fp) + ',' + str(barcodes_fp),
                         '-i', str(forward_fastq_fp) + ',' + str(reverse_fastq_fp),
@@ -301,13 +306,16 @@ class Pipeline:
                     in_file = input_file
                     barcodes_fp = self.index_file_path
                 else: 
-                    input_file_glob = os.path.join(input_dir, 'reads*.fastq*')
+                    input_file_glob = os.path.join(input_dir, '*reads*.fastq*')
+                    for in_file in glob.glob(input_file_glob):
+                        print(in_file)
                     in_file = glob.glob(input_file_glob)[0]
                     barcodes_fp = get_associated_barcodes_unpaired_fp(in_file)
                 log.info('Splitting libraries of "%s" with "%s"', in_file, barcodes_fp)
                 # TODO Make argument for -q and --max_barcode_errors and rev_comp (1-step vs 2-step PCR?)?
                 run_cmd([
-                    'python', '/miniconda/bin/split_libraries_fastq.py',
+                    #'python', '/miniconda/bin/split_libraries_fastq.py',
+                    'split_libraries_fastq.py',
                     '-o', str(output_dir),
                     '-b', str(barcodes_fp),
                     '-i', str(in_file),
@@ -349,7 +357,8 @@ class Pipeline:
                 split_fastq_basename = os.path.basename(split_fastq_fp)
                 file_name = re.split('_seqs', split_fastq_basename)[0]
                 run_cmd([
-                        'python', '/miniconda/bin/split_sequence_file_on_sample_ids.py',
+                        #'python', '/miniconda/bin/split_sequence_file_on_sample_ids.py',
+                        'split_sequence_file_on_sample_ids.py',
                         '-i', split_fastq_fp,
                         '-o', str(output_dir),
                         '--file_type', 'fastq'
