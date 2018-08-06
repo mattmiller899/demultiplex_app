@@ -47,6 +47,8 @@ def get_args():
 
     arg_parser.add_argument('-d', '--index-file', default='',
                             help='path to index file')
+    arg_parser.add_argument('-e', '--max-barcode-errors', default=0,
+                            help='--max_barcode_errors for qiime split_libraries_fastq')
 
     '''
     arg_parser.add_argument('--uchime-ref-db-fp', default='/16SrDNA/pr2/pr2_gb203_version_4.5.fasta',
@@ -82,6 +84,7 @@ class Pipeline:
             barcode_length,
             paired_ends,
             index_file,
+            max_barcode_errors,
             **kwargs  # allows some command line arguments to be ignored
             ):
         
@@ -90,6 +93,7 @@ class Pipeline:
 
         self.mapping_file = mapping_file
         self.barcode_length = barcode_length
+        self.max_barcode_errors = max_barcode_errors
         self.paired_ends_path = paired_ends
         self.paired_ends = False
         self.paired_ends_dir = False
@@ -283,7 +287,7 @@ class Pipeline:
                         '-m', str(self.mapping_file),
                         '--barcode_type', str(self.barcode_length),
                         '-q', '0',
-                        '--max_barcode_errors', '0',
+                        '--max_barcode_errors', str(self.max_barcode_errors),
                         '--rev_comp_barcode',
                         '--phred_offset=33',
                         '--store_demultiplexed_fastq'
@@ -322,7 +326,7 @@ class Pipeline:
                     '-m', str(self.mapping_file),
                     '--barcode_type', str(self.barcode_length),
                     '-q', '0',
-                    '--max_barcode_errors', '0',
+                    '--max_barcode_errors', str(self.max_barcode_errors), 
                     '--rev_comp_barcode',
                     '--phred_offset=33',
                     '--store_demultiplexed_fastq'
