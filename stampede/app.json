@@ -1,34 +1,33 @@
 {
-    "name": "demultiplex_app",
-    "version": "0.0.1",
-    "shortDescription": "This app removes barcodes from reads and demultiplexes the reads into bins based on the barcodes",
-    "longDescription": "Do this later",
     "available": true,
     "checkpointable": false,
-    "defaultMemoryPerNode": 192,
-    "defaultProcessorsPerNode": 48,
+    "defaultMemoryPerNode": 32,
+    "defaultProcessorsPerNode": 16,
     "defaultMaxRunTime": "12:00:00",
     "defaultNodeCount": 1,
     "defaultQueue": "normal",
-    "deploymentPath": "user/applications/app_name-version/stampede",
+    "deploymentPath": "mattmiller899/applications//stampede",
     "deploymentSystem": "data.iplantcollaborative.org",
-    "executionSystem": "tacc-stampede2-user",
+    "executionSystem": "tacc-stampede2-mattmill",
     "executionType": "HPC",
-    "helpURI": "http://google.com",
-    "label": "Demultiplexer",
-    "parallelism": "serial",
+    "helpURI": "http://protocols.io",
+    "label": "iMicrobe Demultiplexer",
+    "longDescription": "Sequence Demultiplexer for singe or paired-end reads",
+    "modules": [],
+    "name": "mattmiller899-demultiplex-app",
+    "ontology": [
+      "http://sswapmeet.sswap.info/agave/apps/Application"
+    ],
+    "parallelism": "SERIAL",
+    "shortDescription": "iMicrobe Demultiplexer",
+    "tags": [
+      "imicrobe",
+      "demultiplex",
+      "paired-ends"
+    ],
     "templatePath": "template.sh",
     "testPath": "test.sh",
-    "modules": [
-        "tacc-singularity",
-        "launcher"
-    ],
-    "tags": [
-        "imicrobe"
-    ],
-    "ontology": [
-        "http://sswapmeet.sswap.info/agave/apps/Application"
-    ],
+    "version": "0.0.1",    
     "inputs": [
         {
             "id": "INPUT_DIR",
@@ -131,25 +130,6 @@
                 "description": "Length of the barcodes for your reads",
                 "label": "PARAM1",
                 "argument": "-b",
-                "repeatArgument": false,
-                "showArgument": true
-            }
-        },
-        {
-            "id": "HELP",
-            "value": {
-                "default": false,
-                "type": "boolean",
-                "order": 2,
-                "required": false,
-                "visible": true,
-                "enquote": false,
-                "validator": ""
-            },
-            "details": {
-                "description": "Print the help documentation and exit",
-                "label": "PARAM2",
-                "argument": "-h",
                 "repeatArgument": false,
                 "showArgument": true
             }
