@@ -50,7 +50,7 @@ WORK_DIR=""
 PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
-IMG="demultiplexer.img"
+IMG="/work/05286/mattmill/stampede2/demultiplex_pipeline/demultiplexer.img"
 
 
 [[ $# -eq 0 ]] && USAGE 1
@@ -110,11 +110,6 @@ if [[ ! -f "$IMG" ]]; then
     exit 1
 fi
 
-PARAMRUN="$TACC_LAUNCHER_DIR/paramrun"
-export LAUNCHER_PLUGIN_DIR="$TACC_LAUNCHER_DIR/plugins"
-export LAUNCHER_WORKDIR="$PWD"
-export LAUNCHER_RMI="SLURM"
-export LAUNCHER_SCHED="interleaved"
 
 #
 # Detect if INPUT is a regular file or directory, expand to list of files
@@ -151,31 +146,13 @@ cat -n "$INPUT_FILES"
 #
 # Here is how to use LAUNCHER for parallelization
 #
-PARAM="$$.param"
-cat /dev/null > "$PARAM"
 while read -r FILE; do
     if [[ $PAIRED_DIR -eq "" ]]; then
-        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH" >> "$PARAM"
+        singularity run '$IMG' -i '$FILE' -w '$WORK_DIR' -m '$MAPPING_FILE' -b '$BARCODE_LENGTH'
     else
-        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH -p $PAIRED_DIR" >> "$PARAM"
+        singularity run '$IMG' -i '$FILE' -w '$WORK_DIR' -m '$MAPPING_FILE' -b '$BARCODE_LENGTH' -p '$PAIRED_DIR'
     fi
 done < "$INPUT_FILES"
-
-echo "Starting Launcher"
-if [[ $NUM_INPUT -lt 16 ]]; then
-    LAUNCHER_PPN=$NUM_INPUT
-else
-    LAUNCHER_PPN=16
-fi
-
-LAUNCHER_JOB_FILE="$PARAM"
-export LAUNCHER_JOB_FILE
-export LAUNCHER_PPN
-$PARAMRUN
-echo "Ended LAUNCHER"
-unset LAUNCHER_PPN
-
-rm "$PARAM"
 
 echo "Done."
 
