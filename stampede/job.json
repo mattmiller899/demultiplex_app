@@ -1,0 +1,14 @@
+{
+  "name": "mattmiller899-demultiplex-app test-1534794211",
+  "appId": "mattmiller899-demultiplex-app-0.0.1",
+  "archive": false,
+  "inputs": {
+    "INPUT_DIR": "/mattmiller899/demult_data_in",
+    "WORK_DIR": "/mattmiller899/demult_data_out",
+    "MAPPING_FILE": "/mattmiller899/160602_Mapping_File_VRich_20160528_16SRev.tsv",
+    "PAIRED_ENDS": "/mattmiller899/demult_data_in_paired"
+  },
+  "parameter": {
+    "BARCODE_LENGTH": 12
+  }
+}

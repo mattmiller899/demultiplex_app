@@ -1,6 +1,4 @@
-.PHONY: clean up template job app test
-
-APP = stampede2-demultiplexer
+APP=mattmiller899-demultiplex-app-0.0.1
 
 clean:
 	find . \( -name \*.out -o -name \*.param \) -exec rm {} \;
@@ -9,7 +7,7 @@ up:
 	copy_from_manifest.py
 
 template:
-	jobs-template -A $(APP) > job.json
+	jobs-template $(APP) > job.json
 
 job:
 	jobs-submit -F job.json

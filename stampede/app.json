@@ -12,7 +12,7 @@
     "executionType": "HPC",
     "helpURI": "http://protocols.io",
     "label": "iMicrobe Demultiplexer",
-    "longDescription": "Sequence Demultiplexer for singe or paired-end reads",
+    "longDescription": "Sequence Demultiplexer for single or paired-end reads",
     "modules": [],
     "name": "mattmiller899-demultiplex-app",
     "ontology": [
@@ -34,18 +34,17 @@
             "value": {
                 "default": "",
                 "required": true,
-                "visible": true,
+                "visible": true
             },
             "semantics": {
-                "minCardinality": 1,
-                "maxCardinality": -1,
+                "maxCardinality": 1,
                 "fileTypes": [
                     "raw-0"
                 ]
             },
             "details": {
-                "description": "Path to the input directory (or file)",
-                "label": "LABEL1",
+                "description": "",
+                "label": "Path to the input directory (or file)",
                 "argument": "-i ",
                 "repeatArgument": false,
                 "showArgument": true
@@ -56,18 +55,17 @@
             "value": {
                 "default": "",
                 "required": true,
-                "visible": true,
+                "visible": true
             },
             "semantics": {
-                "minCardinality": 1,
-                "maxCardinality": -1,
+                "maxCardinality": 1,
                 "fileTypes": [
                     "raw-0"
                 ]
             },
             "details": {
-                "description": "path to the working directory",
-                "label": "LABEL2",
+                "description": "",
+                "label": "path to the working directory",
                 "argument": "-w ",
                 "repeatArgument": false,
                 "showArgument": true
@@ -78,19 +76,39 @@
             "value": {
                 "default": "",
                 "required": true,
-                "visible": true,
+                "visible": true
             },
             "semantics": {
-                "minCardinality": 1,
-                "maxCardinality": -1,
+                "maxCardinality": 1,
                 "fileTypes": [
                     "raw-0"
                 ]
             },
             "details": {
-                "description": "path to the file containing barcode mappings",
-                "label": "LABEL3",
+                "description": "",
+                "label": "Path to the file containing barcode mappings",
                 "argument": "-m ",
+                "repeatArgument": false,
+                "showArgument": true
+            }
+        },
+        {
+            "id": "PAIRED_ENDS",
+            "value": {
+                "default": "",
+                "required": false,
+                "visible": true
+            },
+            "semantics": {
+                "maxCardinality": 1,
+                "fileTypes": [
+                    "raw-0"
+                ]
+            },
+            "details": {
+                "description": "",
+                "label": "Path to directory (or file) with the paired end reads",
+                "argument": "-p ",
                 "repeatArgument": false,
                 "showArgument": true
             }
@@ -109,25 +127,9 @@
                 "validator": ""
             },
             "details": {
-                "description": "Length of the barcodes for your reads",
-                "label": "PARAM1",
+                "description": "",
+                "label": "Length of the barcodes for your reads",
                 "argument": "-b ",
-                "repeatArgument": false,
-                "showArgument": true
-            }
-        },
-        {
-            "id": "PAIRED_ENDS",
-            "value": {
-                "default": "",
-                "required": false,
-                "type": "flag",
-                "visible": true
-            },
-            "details": {
-                "description": "path to directory (or file) with the paired end reads",
-                "label": "PARAM3",
-                "argument": "-p ",
                 "repeatArgument": false,
                 "showArgument": true
             }

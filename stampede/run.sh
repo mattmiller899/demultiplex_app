@@ -50,7 +50,7 @@ WORK_DIR=""
 PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
-IMG="/work/05286/mattmill/stampede2/demultiplexer.img"
+IMG="/work/05066/imicrobe/singularity/demultiplexer.img"
 
 
 [[ $# -eq 0 ]] && USAGE 1
@@ -84,6 +84,12 @@ while getopts :i:w:b:m:p:h OPT; do
       exit 1
   esac
 done
+
+echo "INPUT_DIR = '$INPUT_DIR'"
+echo "WORK_DIR = '$WORK_DIR'"
+echo "MAPPING_FILE = '$MAPPING_FILE'"
+echo "BARCODE_LENGTH = '$BARCODE_LENGTH'"
+echo "PAIRED_DIR = '$PAIRED_DIR'"
 
 if [[ "$BARCODE_LENGTH" -eq 0 ]]; then
 	echo "BARCODE_LENGTH is required"
@@ -147,10 +153,11 @@ cat -n "$INPUT_FILES"
 # Here is how to use LAUNCHER for parallelization
 #
 while read -r FILE; do
-    if [[ $PAIRED_DIR -eq "" ]]; then
-        singularity run '$IMG' -i '$FILE' -w '$WORK_DIR' -m '$MAPPING_FILE' -b '$BARCODE_LENGTH'
+    if [[ $PAIRED_DIR = "" ]]; then
+        singularity run "$IMG" -i '$FILE' -w '$WORK_DIR' -m '$MAPPING_FILE' -b '$BARCODE_LENGTH'
     else
-        singularity run '$IMG' -i '$FILE' -w '$WORK_DIR' -m '$MAPPING_FILE' -b '$BARCODE_LENGTH' -p '$PAIRED_DIR'
+        echo "$IMG"
+        singularity run "$IMG" -i "$FILE" -w "$WORK_DIR" -m "$MAPPING_FILE" -b "$BARCODE_LENGTH" -p "$PAIRED_DIR"
     fi
 done < "$INPUT_FILES"
 
