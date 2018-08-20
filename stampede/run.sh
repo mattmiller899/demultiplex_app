@@ -50,7 +50,7 @@ WORK_DIR=""
 PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
-IMG="/work/05066/imicrobe/singularity/demultiplexer.img"
+IMG="/work/05066/imicrobe/singularity/demultiplexer-0.0.1.img"
 
 
 [[ $# -eq 0 ]] && USAGE 1
