@@ -50,7 +50,7 @@ WORK_DIR=""
 PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
-IMG="/work/05286/mattmill/stampede2/demultiplex_pipeline/demultiplexer.img"
+IMG="/work/05286/mattmill/stampede2/demultiplexer.img"
 
 
 [[ $# -eq 0 ]] && USAGE 1
@@ -85,22 +85,22 @@ while getopts :i:w:b:m:p:h OPT; do
   esac
 done
 
-if [[ $BARCODE_LENGTH -eq 0 ]]; then
+if [[ "$BARCODE_LENGTH" -eq 0 ]]; then
 	echo "BARCODE_LENGTH is required"
 	exit 1
 fi
 
-if [[ $MAPPING_FILE -eq "" ]]; then
+if [[ "$MAPPING_FILE" = "" ]]; then
 	echo "MAPPING_FILE is required"
 	exit 1
 fi
 
-if [[ $WORK_DIR -eq "" ]]; then
+if [[ "$WORK_DIR" = "" ]]; then
     echo "WORK_DIR is required"
     exit 1
 fi
 
-if [[ $INPUT_DIR -eq "" ]]; then
+if [[ "$INPUT_DIR" = "" ]]; then
     echo "INPUT_DIR is required"
     exit 1
 fi
