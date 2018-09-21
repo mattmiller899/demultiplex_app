@@ -397,11 +397,10 @@ class Pipeline:
                     for l in f:
                         if count % 4 == 0:
                             write_file = l.split(' ')[2].split(':')[0]
-                            write_line = l.split(' ')
                             if write_file == '1':
-                                out1.write('@' + ' '.join(write_line[1:]))
+                                out1.write('@{}'.format(l[1:]))
                             elif write_file == '2':
-                                out2.write('@' + ' '.join(write_line[1:]))
+                                out2.write('@{}'.format(l[1:]))
                             else:
                                 log.info('Bad number for paired end files "%s" in "%s', write_file, l)
                         elif write_file == '1':
