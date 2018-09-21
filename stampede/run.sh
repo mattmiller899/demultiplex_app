@@ -50,7 +50,7 @@ WORK_DIR=""
 PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
-IMG="demultiplexer.img"
+IMG="/work/05066/imicrobe/singularity/demultiplexer-0.0.1.img"
 
 
 [[ $# -eq 0 ]] && USAGE 1
@@ -85,22 +85,28 @@ while getopts :i:w:b:m:p:h OPT; do
   esac
 done
 
-if [[ $BARCODE_LENGTH -eq 0 ]]; then
+echo "INPUT_DIR = '$INPUT_DIR'"
+echo "WORK_DIR = '$WORK_DIR'"
+echo "MAPPING_FILE = '$MAPPING_FILE'"
+echo "BARCODE_LENGTH = '$BARCODE_LENGTH'"
+echo "PAIRED_DIR = '$PAIRED_DIR'"
+
+if [[ "$BARCODE_LENGTH" -eq 0 ]]; then
 	echo "BARCODE_LENGTH is required"
 	exit 1
 fi
 
-if [[ $MAPPING_FILE -eq "" ]]; then
+if [[ "$MAPPING_FILE" = "" ]]; then
 	echo "MAPPING_FILE is required"
 	exit 1
 fi
 
-if [[ $WORK_DIR -eq "" ]]; then
+if [[ "$WORK_DIR" = "" ]]; then
     echo "WORK_DIR is required"
     exit 1
 fi
 
-if [[ $INPUT_DIR -eq "" ]]; then
+if [[ "$INPUT_DIR" = "" ]]; then
     echo "INPUT_DIR is required"
     exit 1
 fi
@@ -110,11 +116,6 @@ if [[ ! -f "$IMG" ]]; then
     exit 1
 fi
 
-PARAMRUN="$TACC_LAUNCHER_DIR/paramrun"
-export LAUNCHER_PLUGIN_DIR="$TACC_LAUNCHER_DIR/plugins"
-export LAUNCHER_WORKDIR="$PWD"
-export LAUNCHER_RMI="SLURM"
-export LAUNCHER_SCHED="interleaved"
 
 #
 # Detect if INPUT is a regular file or directory, expand to list of files
@@ -151,31 +152,14 @@ cat -n "$INPUT_FILES"
 #
 # Here is how to use LAUNCHER for parallelization
 #
-PARAM="$$.param"
-cat /dev/null > "$PARAM"
 while read -r FILE; do
-    if [[ $PAIRED_DIR -eq "" ]]; then
-        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH" >> "$PARAM"
+    if [[ $PAIRED_DIR = "" ]]; then
+        singularity run "$IMG" -i '$FILE' -w '$WORK_DIR' -m '$MAPPING_FILE' -b '$BARCODE_LENGTH'
     else
-        echo "singularity run $IMG -i $FILE -w $WORK_DIR -m $MAPPING_FILE -b $BARCODE_LENGTH -p $PAIRED_DIR" >> "$PARAM"
+        echo "$IMG"
+        singularity run "$IMG" -i "$FILE" -w "$WORK_DIR" -m "$MAPPING_FILE" -b "$BARCODE_LENGTH" -p "$PAIRED_DIR"
     fi
 done < "$INPUT_FILES"
-
-echo "Starting Launcher"
-if [[ $NUM_INPUT -lt 16 ]]; then
-    LAUNCHER_PPN=$NUM_INPUT
-else
-    LAUNCHER_PPN=16
-fi
-
-LAUNCHER_JOB_FILE="$PARAM"
-export LAUNCHER_JOB_FILE
-export LAUNCHER_PPN
-$PARAMRUN
-echo "Ended LAUNCHER"
-unset LAUNCHER_PPN
-
-rm "$PARAM"
 
 echo "Done."
 
