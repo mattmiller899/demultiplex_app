@@ -26,6 +26,5 @@ From: ubuntu:latest
     mkdir /home1
     mkdir /scratch
     mkdir /work
-    /usr/bin/pip3 install -c anaconda scandir
     /usr/bin/pip3 install qiime matplotlib=1.4.3 mock nose -c bioconda
     /usr/bin/pip3 install --upgrade numpy
