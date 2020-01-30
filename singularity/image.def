@@ -12,7 +12,7 @@ From: ubuntu:latest
     apt-get update
     apt-get install -y locales git wget build-essential libglib2.0-0 libsm6 libxrender1 libfontconfig1
     locale-gen en_US.UTF-8
-
+    apt-get install -y python3-dev python3-pip
     #
     # Put everything into $APP_DIR
     #
@@ -26,9 +26,6 @@ From: ubuntu:latest
     mkdir /home1
     mkdir /scratch
     mkdir /work
-    wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
-    chmod u+x Miniconda-latest-Linux-x86_64.sh
-    ./Miniconda-latest-Linux-x86_64.sh -b -p /miniconda
-    /miniconda/bin/conda install -c anaconda scandir
-    /miniconda/bin/conda install qiime matplotlib=1.4.3 mock nose -c bioconda
-    /miniconda/bin/pip install --upgrade numpy
+    /usr/bin/pip3 install -c anaconda scandir
+    /usr/bin/pip3 install qiime matplotlib=1.4.3 mock nose -c bioconda
+    /usr/bin/pip3 install --upgrade numpy

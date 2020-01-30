@@ -6,22 +6,24 @@ A demultiplexing and index-removing pipeline for single and paired-end data.
 
 There are three ways to run this pipeline.
 
-    + Clone the repository and run with Python 2.7
+    + Clone the repository and run with Python 3.6
     + As a Singularity Container.
     + As a Cyverse/iMicrobe app.
 
-## Clone and Run with Python 2.7
-The only requirement to run the pipeline as a Python 2.7+ package is a Python 2.7+ interpreter and `Git`. It is not required but is highly recommended to install the pipeline in a virtual environment. You will need qiime installed to your Python installation. Clone the package:
+## Clone and Run with Python 3.6
+The only requirement to run the pipeline as a Python 3.6+ package is a Python 3.6+ interpreter and `Git`. It is not required but is highly recommended to install the pipeline in a virtual environment. You will need qiime installed to your Python installation. Clone the package:
 
 ```
 $ git clone git@github.com:mattmiller899/demultiplex_app.git
+OR
+$ git clone https://github.com/mattmiller899/demultiplex_app
 $ cd demultiplex_app/scripts
 $ python pipeline.py \
     -i /path/to/input/directory/ \
     -w /path/to/output/directory/ \
     -m /path/to/mapping/file.txt \
     -b 12 \
-    -p /path/to/paired/ends/directory \
+    -p /path/to/paired/ends/directory/ \
     -d /path/to/index/file.txt
 ```
 
