@@ -6,14 +6,14 @@
     "defaultMaxRunTime": "12:00:00",
     "defaultNodeCount": 1,
     "defaultQueue": "normal",
-    "deploymentPath": "/mattmiller899/applications/demultiplex_app-0.0.1/stampede",
+    "deploymentPath": "/mattmiller899/applications/demultiplex_app-0.1.0/stampede",
     "deploymentSystem": "data.iplantcollaborative.org",
     "executionSystem": "tacc-stampede2-mattmill",
     "executionType": "HPC",
     "helpURI": "http://protocols.io",
     "label": "iMicrobe Demultiplexer",
     "longDescription": "Sequence Demultiplexer for single or paired-end reads",
-    "modules": [],
+    "modules": ["load tacc-singularity"],
     "name": "mattmiller899-demultiplex-app",
     "ontology": [
       "http://sswapmeet.sswap.info/agave/apps/Application"

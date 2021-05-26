@@ -15,7 +15,6 @@ import re
 import shutil
 import sys
 import qiime
-import scandir
 
 from pipeline_util import *
 from fasta_qual_to_fastq import fasta_qual_to_fastq

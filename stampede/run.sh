@@ -7,9 +7,6 @@
 #SBATCH -t 24:00:00
 #SBATCH -A iPlant-Collabs
 
-module load tacc-singularity
-module load launcher
-
 set -u
 
 function ADVANCED_USAGE() {
@@ -50,7 +47,7 @@ WORK_DIR=""
 PAIRED_DIR=""
 BARCODE_LENGTH=0
 MAPPING_FILE=""
-IMG="/work/05066/imicrobe/singularity/demultiplexer-0.0.1.img"
+IMG="/work/05066/imicrobe/singularity/demultiplexer-0.1.0.img"
 
 
 [[ $# -eq 0 ]] && USAGE 1
